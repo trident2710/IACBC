@@ -12,7 +12,7 @@ typedef std::bitset<BLOCK_SIZE> block;
   makes XOR for 2 blocks
   @return res
 **/
-void xor_block(block block1, block block2, block *res);
+block xor_block(block block1, block block2);
 
 /**
   increments block

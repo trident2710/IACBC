@@ -2,8 +2,8 @@
 #include "stdio.h"
 
 
-void xor_block(block block1, block block2, block *res){
-  *res = block1^block2;
+block xor_block(block block1, block block2){
+  return block1^block2;
 }
 
 block incr_block(block block1){
