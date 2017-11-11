@@ -1,15 +1,14 @@
-CC=gcc
-CFLAGS=-Wall
+CC=g++
 EXEC= encrypt
 
-encrypt:encrypt.o libiacbc.o
-	$(CC) $(CFLAGS) -o $@ $<
+encrypt: encrypt.o libiacbc.o
+	$(CC) encrypt.o libiacbc.o -o encrypt
 
-encrypt.o: encrypt.c
-	$(CC) $(CFLAGS) -c $< -o $@
+encrypt.o: encrypt.cpp
+	$(CC) -c encrypt.cpp
 
-libiacbc.o:libiacbc.c libiacbc.h
-	$(CC) $(CFLAGS) -c $< -o $@
+libiacbc.o: libiacbc.cpp
+	$(CC) -c libiacbc.cpp
 
 clean:
 	rm -rf *.o
