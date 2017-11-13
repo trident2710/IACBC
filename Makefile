@@ -1,8 +1,9 @@
 CC=g++
 EXEC= encrypt
+FLAGS= -W -Wall -Wextra -lssl -lcrypto
 
 encrypt: encrypt.o libiacbc.o
-	$(CC) encrypt.o libiacbc.o -o encrypt
+	$(CC) encrypt.o libiacbc.o -o encrypt $(FLAGS)
 
 encrypt.o: encrypt.cpp
 	$(CC) -c encrypt.cpp

@@ -65,3 +65,58 @@ block unpad(block block1){
   }
   return block1;
 }
+
+int gen_key(const char* password, int passlen, const unsigned char* IV, int IVlen, unsigned char *out){
+    return PKCS5_PBKDF2_HMAC_SHA1(password, passlen, IV, IVlen, ITER, IACBC_KEY_SIZE, out);
+}
+
+void block_to_char_array(block block1, unsigned char* res){
+  for(int i=0;i<BLOCK_SIZE/8;i++){
+    unsigned char val=0;
+    for(int j=0;j<8;j++){
+      val+=block1[8*i+j]?1<<j:0;
+    }
+    *(res+i)=val;
+  }
+}
+
+block char_array_to_block(const unsigned char* res){
+  block block1;
+  for(int i=0;i<BLOCK_SIZE;i++){
+    for(int j=0;j<8;j++){
+      block1[8*i+j] = (*(res+i)&(1<<j))?1:0;
+    }
+  }
+  return block1;
+}
+
+void byte_dump(const unsigned char* block, int block_length){
+  for(int i=0;i<block_length;i++){
+    unsigned char x = *(block+i);
+    for (int j = 0; j < 8; j++) {
+      printf("%d", !!((x << j) & 0x80));
+    }
+    printf("\n");
+  }
+}
+
+
+block encrypt_block(block block1, unsigned char* key){
+  unsigned char* bl = (unsigned char*)malloc(BLOCK_SIZE/8);
+  block_to_char_array(block1, bl);
+  unsigned char* output = (unsigned char*)malloc(BLOCK_SIZE/8);
+  AES_KEY aes_key;
+  AES_set_encrypt_key(key, KEY_SIZE, &aes_key);
+  AES_encrypt(bl, output, &aes_key);
+  return char_array_to_block(output);
+}
+
+block decrypt_block(block block1, unsigned char* key){
+  unsigned char* bl = (unsigned char*)malloc(BLOCK_SIZE/8);
+  block_to_char_array(block1, bl);
+  unsigned char* output = (unsigned char*)malloc(BLOCK_SIZE/8);
+  AES_KEY aes_key;
+  AES_set_decrypt_key(key, KEY_SIZE, &aes_key);
+  AES_decrypt(bl, output, &aes_key);
+  return char_array_to_block(output);
+}
