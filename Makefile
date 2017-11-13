@@ -1,15 +1,18 @@
 CC=g++
-EXEC= encrypt
+EXEC= asi331examen
 FLAGS= -W -Wall -Wextra -lssl -lcrypto
 
-encrypt: encrypt.o libiacbc.o
-	$(CC) encrypt.o libiacbc.o -o encrypt $(FLAGS)
+asi331examen: iacbc.o libiacbc.o readinput.o
+	$(CC) iacbc.o libiacbc.o readinput.o -o asi331examen $(FLAGS)
 
-encrypt.o: encrypt.cpp
-	$(CC) -c encrypt.cpp
+iacbc.o: iacbc.cpp
+	$(CC) -c iacbc.cpp
 
 libiacbc.o: libiacbc.cpp
 	$(CC) -c libiacbc.cpp
+
+readinput.o: readinput.cpp
+		$(CC) -c readinput.cpp
 
 clean:
 	rm -rf *.o

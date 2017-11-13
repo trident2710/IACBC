@@ -46,7 +46,7 @@ int get_padding_value(block block1){
   for(int i=0;i<8;i++){
     if(block1[BLOCK_SIZE-8+i]) val+=(1<<i);
   }
-  return val;
+  return val<=16?val:-1;
 }
 
 block pad(block block1){
@@ -60,6 +60,7 @@ block pad(block block1){
 
 block unpad(block block1){
   int padding_val = get_padding_value(block1);
+  if(padding_val!=-1)
   for(int i = BLOCK_SIZE-8*padding_val;i<BLOCK_SIZE;i++){
     block1[i]=0;
   }
@@ -102,9 +103,9 @@ void byte_dump(const unsigned char* block, int block_length){
 
 
 block encrypt_block(block block1, const unsigned char* key){
-  unsigned char* bl = (unsigned char*)malloc(BLOCK_SIZE/8);
+  unsigned char* bl = (unsigned char*)calloc(BLOCK_SIZE/8,1);
   block_to_char_array(block1, bl);
-  unsigned char* output = (unsigned char*)malloc(BLOCK_SIZE/8);
+  unsigned char* output = (unsigned char*)calloc(BLOCK_SIZE/8,1);
   AES_KEY aes_key;
   AES_set_encrypt_key(key, KEY_SIZE, &aes_key);
   AES_encrypt(bl, output, &aes_key);
@@ -112,9 +113,9 @@ block encrypt_block(block block1, const unsigned char* key){
 }
 
 block decrypt_block(block block1, const unsigned char* key){
-  unsigned char* bl = (unsigned char*)malloc(BLOCK_SIZE/8);
+  unsigned char* bl = (unsigned char*)calloc(BLOCK_SIZE/8,1);
   block_to_char_array(block1, bl);
-  unsigned char* output = (unsigned char*)malloc(BLOCK_SIZE/8);
+  unsigned char* output = (unsigned char*)calloc(BLOCK_SIZE/8,1);
   AES_KEY aes_key;
   AES_set_decrypt_key(key, KEY_SIZE, &aes_key);
   AES_decrypt(bl, output, &aes_key);
@@ -123,9 +124,9 @@ block decrypt_block(block block1, const unsigned char* key){
 
 void encrypt_iacbc(const unsigned char* K1, const unsigned char* K2, const unsigned char* R, unsigned char** plain, unsigned char** encrypted, int length){
   int m = length +1;
-  unsigned char** s = (unsigned char**)malloc(m*sizeof(unsigned char*));
+  unsigned char** s = (unsigned char**)calloc(m,sizeof(unsigned char*));
   for(int i = 0; i < m; i++){
-      s[i] = (unsigned char*)malloc(BLOCK_SIZE/8);
+      s[i] = (unsigned char*)calloc(BLOCK_SIZE/8,1);
   }
   block r = char_array_to_block(R);
 
@@ -157,9 +158,9 @@ void decrypt_iacbc(const unsigned char* K1, const unsigned char* K2, const unsig
   block rr = decrypt_block(char_array_to_block(*encrypted),K1);
   if(rr!=char_array_to_block(R)) printf("we have problems1\n");
 
-  unsigned char** s = (unsigned char**)malloc(m*sizeof(unsigned char*));
+  unsigned char** s = (unsigned char**)calloc(m,sizeof(unsigned char*));
   for(int i = 0; i < m; i++){
-      s[i] = (unsigned char*)malloc(BLOCK_SIZE/8);
+      s[i] = (unsigned char*)calloc(BLOCK_SIZE/8,1);
   }
 
   for(int i=0;i<m;i++){
@@ -190,10 +191,10 @@ void decrypt_iacbc(const unsigned char* K1, const unsigned char* K2, const unsig
 }
 
 void encrypt(const char* pwd, int pwdlen, const unsigned char* IV, unsigned char** msg, int msglen, unsigned char** res){
-  unsigned char* k = (unsigned char*)malloc(IACBC_KEY_SIZE);
-  unsigned char* K1 = (unsigned char*)malloc(KEY_SIZE/8);
-  unsigned char* K2 = (unsigned char*)malloc(KEY_SIZE/8);
-  unsigned char* R = (unsigned char*)malloc(KEY_SIZE/8/2);
+  unsigned char* k = (unsigned char*)calloc(IACBC_KEY_SIZE,1);
+  unsigned char* K1 = (unsigned char*)calloc(KEY_SIZE/8,1);
+  unsigned char* K2 = (unsigned char*)calloc(KEY_SIZE/8,1);
+  unsigned char* R = (unsigned char*)calloc(KEY_SIZE/8/2,1);
 
   gen_key(pwd, pwdlen, IV, BLOCK_SIZE/8, k);
 
@@ -205,10 +206,10 @@ void encrypt(const char* pwd, int pwdlen, const unsigned char* IV, unsigned char
 }
 
 void decrypt(const char* pwd, int pwdlen, const unsigned char* IV, unsigned char** cyph, int cyphlen, unsigned char** res){
-  unsigned char* k = (unsigned char*)malloc(IACBC_KEY_SIZE);
-  unsigned char* K1 = (unsigned char*)malloc(KEY_SIZE/8);
-  unsigned char* K2 = (unsigned char*)malloc(KEY_SIZE/8);
-  unsigned char* R = (unsigned char*)malloc(KEY_SIZE/8/2);
+  unsigned char* k = (unsigned char*)calloc(IACBC_KEY_SIZE,1);
+  unsigned char* K1 = (unsigned char*)calloc(KEY_SIZE/8,1);
+  unsigned char* K2 = (unsigned char*)calloc(KEY_SIZE/8,1);
+  unsigned char* R = (unsigned char*)calloc(KEY_SIZE/8/2,1);
 
   gen_key(pwd, pwdlen, IV, BLOCK_SIZE/8, k);
 
