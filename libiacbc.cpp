@@ -187,5 +187,35 @@ void decrypt_iacbc(const unsigned char* K1, const unsigned char* K2, const unsig
   last = xor_block(last,epprev);
 
   if(last!=plast) printf("we have problems2\n");
+}
+
+void encrypt(const char* pwd, int pwdlen, const unsigned char* IV, unsigned char** msg, int msglen, unsigned char** res){
+  unsigned char* k = (unsigned char*)malloc(IACBC_KEY_SIZE);
+  unsigned char* K1 = (unsigned char*)malloc(KEY_SIZE/8);
+  unsigned char* K2 = (unsigned char*)malloc(KEY_SIZE/8);
+  unsigned char* R = (unsigned char*)malloc(KEY_SIZE/8/2);
+
+  gen_key(pwd, pwdlen, IV, BLOCK_SIZE/8, k);
+
+  memcpy(K1, k, 32);
+  memcpy(K2, k+32, 32);
+  memcpy(R, k+64, 16);
+
+  encrypt_iacbc(K1,K2,R,msg,res,msglen);
+}
+
+void decrypt(const char* pwd, int pwdlen, const unsigned char* IV, unsigned char** cyph, int cyphlen, unsigned char** res){
+  unsigned char* k = (unsigned char*)malloc(IACBC_KEY_SIZE);
+  unsigned char* K1 = (unsigned char*)malloc(KEY_SIZE/8);
+  unsigned char* K2 = (unsigned char*)malloc(KEY_SIZE/8);
+  unsigned char* R = (unsigned char*)malloc(KEY_SIZE/8/2);
+
+  gen_key(pwd, pwdlen, IV, BLOCK_SIZE/8, k);
+
+  memcpy(K1, k, 32);
+  memcpy(K2, k+32, 32);
+  memcpy(R, k+64, 16);
+
+  decrypt_iacbc(K1, K2, R, res, cyph, cyphlen);
 
 }

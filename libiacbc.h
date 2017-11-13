@@ -81,6 +81,18 @@ void encrypt_iacbc(const unsigned char* K1, const unsigned char* K2, const unsig
 **/
 void decrypt_iacbc(const unsigned char* K1, const unsigned char* K2, const unsigned char* R, unsigned char** plain, unsigned char** encrypted, int elength);
 
+/**
+  IACBC encrypt message which consists of blocks of length BLOCK_SIZE using password of length = pwdlen bytes and IV of length = BLOCK_SIZE/8 bytes
+  msglen - number of blocks
+**/
+void encrypt(const char* pwd, int pwdlen, const unsigned char* IV, unsigned char** msg, int msglen, unsigned char** res);
+
+/**
+  IACBC decrypt cipher which consists of blocks of length BLOCK_SIZE using password of length = pwdlen bytes and IV of length = BLOCK_SIZE/8 bytes
+  cyphlen - number of blocks
+**/
+void decrypt(const char* pwd, int pwdlen,  const unsigned char* IV, unsigned char** cyph, int cyphlen, unsigned char** res);
+
 
 
 #endif
