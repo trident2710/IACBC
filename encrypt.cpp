@@ -3,6 +3,9 @@
 #include <bitset>
 
 
+
+
+
 int main(int argc, char const *argv[]) {
 
 
@@ -30,7 +33,7 @@ int main(int argc, char const *argv[]) {
   char* password = "password";
   int plen = 8;
   unsigned char* iv = (unsigned char*)malloc(BLOCK_SIZE/8);
-  block ivbl = block(0xffffffffffffffff);
+  block ivbl = char_array_to_block((unsigned char*)"testtesttesttest");
   block_to_char_array(ivbl, iv);
 
   unsigned char* res = (unsigned char*)malloc(IACBC_KEY_SIZE);
@@ -65,14 +68,45 @@ int main(int argc, char const *argv[]) {
   // block block2 = char_array_to_block(val);
   // std::cout<<block2<<"\n\n";
 
-    block block1 (0xff);
-    std::cout<<block1<<"\n";
-    block enc = encrypt_block(block1, K1);
-    std::cout<<enc<<"\n";
-    block dec = decrypt_block(enc, K1);
-    std::cout<<dec<<"\n";
+    // block block1 (0xff);
+    // std::cout<<block1<<"\n";
+    // block enc = encrypt_block(block1, K1);
+    // std::cout<<enc<<"\n";
+    // block dec = decrypt_block(enc, K1);
+    // std::cout<<dec<<"\n";
 
 
+    printf("p------\n");
+    unsigned char** v = (unsigned char**)malloc(2*sizeof(unsigned char*));
+    for(int i = 0; i < 2; i++){
+        block b = char_array_to_block((unsigned char*)(!i?"helohelohelohela":"helohelohelohelb"));
+        v[i] = (unsigned char*)malloc(BLOCK_SIZE/8);
+        block_to_char_array(b, v[i]);
+        byte_dump(v[i],BLOCK_SIZE/8);
+        printf("\n");
+    }
+    unsigned char** e = (unsigned char**)malloc(4*sizeof(unsigned char*));
+    for(int i = 0; i < 4; i++){
+        e[i] = (unsigned char*)malloc(BLOCK_SIZE/8);
+    }
+    encrypt_iacbc(K1, K2, R, v, e, 2);
+    // for(int i=0;i<4;i++){
+    //   byte_dump(e[i], BLOCK_SIZE/8);
+    //   printf("\n");
+    // }
+
+    unsigned char** dv = (unsigned char**)malloc(2*sizeof(unsigned char*));
+    for(int i = 0; i < 2; i++){
+        dv[i] = (unsigned char*)malloc(BLOCK_SIZE/8);
+    }
+    decrypt_iacbc(K1, K2, R, dv, e, 4);
+    printf("d------\n");
+    for(int i=0;i<2;i++){
+      byte_dump(dv[i],BLOCK_SIZE/8);
+      printf("\n");
+    }
+
+    return 0;
 
 
 }

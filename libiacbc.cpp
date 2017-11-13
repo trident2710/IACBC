@@ -101,7 +101,7 @@ void byte_dump(const unsigned char* block, int block_length){
 }
 
 
-block encrypt_block(block block1, unsigned char* key){
+block encrypt_block(block block1, const unsigned char* key){
   unsigned char* bl = (unsigned char*)malloc(BLOCK_SIZE/8);
   block_to_char_array(block1, bl);
   unsigned char* output = (unsigned char*)malloc(BLOCK_SIZE/8);
@@ -111,7 +111,7 @@ block encrypt_block(block block1, unsigned char* key){
   return char_array_to_block(output);
 }
 
-block decrypt_block(block block1, unsigned char* key){
+block decrypt_block(block block1, const unsigned char* key){
   unsigned char* bl = (unsigned char*)malloc(BLOCK_SIZE/8);
   block_to_char_array(block1, bl);
   unsigned char* output = (unsigned char*)malloc(BLOCK_SIZE/8);
@@ -119,4 +119,73 @@ block decrypt_block(block block1, unsigned char* key){
   AES_set_decrypt_key(key, KEY_SIZE, &aes_key);
   AES_decrypt(bl, output, &aes_key);
   return char_array_to_block(output);
+}
+
+void encrypt_iacbc(const unsigned char* K1, const unsigned char* K2, const unsigned char* R, unsigned char** plain, unsigned char** encrypted, int length){
+  int m = length +1;
+  unsigned char** s = (unsigned char**)malloc(m*sizeof(unsigned char*));
+  for(int i = 0; i < m; i++){
+      s[i] = (unsigned char*)malloc(BLOCK_SIZE/8);
+  }
+  block r = char_array_to_block(R);
+
+  for(int i=0;i<m;i++){
+    r = incr_block(r);
+    block_to_char_array(encrypt_block(r, K2),s[i]);
+  }
+
+  block epprev = encrypt_block(char_array_to_block(R), K1);
+  block_to_char_array(epprev,*encrypted);
+  block plast(0);
+
+  for(int i=1;i<m;i++){
+    block p = char_array_to_block(*(plain+i-1));
+    plast = xor_block(plast, p);
+    block si = char_array_to_block(*(s+i));
+    epprev = encrypt_block(xor_block(p, epprev), K1);
+    block_to_char_array(xor_block(epprev,si),*(encrypted+i));
+  }
+
+  block last = xor_block(encrypt_block(xor_block(plast, epprev),K1),char_array_to_block(s[0]));
+  block_to_char_array(last, *(encrypted+m));
+}
+
+void decrypt_iacbc(const unsigned char* K1, const unsigned char* K2, const unsigned char* R, unsigned char** plain, unsigned char** encrypted, int elength){
+  int plength = elength-2;
+  int m = elength -1;
+
+  block rr = decrypt_block(char_array_to_block(*encrypted),K1);
+  if(rr!=char_array_to_block(R)) printf("we have problems1\n");
+
+  unsigned char** s = (unsigned char**)malloc(m*sizeof(unsigned char*));
+  for(int i = 0; i < m; i++){
+      s[i] = (unsigned char*)malloc(BLOCK_SIZE/8);
+  }
+
+  for(int i=0;i<m;i++){
+    rr = incr_block(rr);
+    block_to_char_array(encrypt_block(rr, K2),s[i]);
+  }
+
+  block epprev = char_array_to_block(*encrypted);
+  block plast(0);
+
+  for(int i=1;i<m;i++){
+    block p = char_array_to_block(*(encrypted+i));
+    block si = char_array_to_block(*(s+i));
+    p = xor_block(p,si);
+    p = decrypt_block(p,K1);
+    p = xor_block(p,epprev);
+    epprev = xor_block(char_array_to_block(*(encrypted+i)),si);
+    plast = xor_block(plast,p);
+    block_to_char_array(p,*(plain+i-1));
+  }
+
+  block last = char_array_to_block(*(encrypted+m));
+  last = xor_block(last,char_array_to_block(*s));
+  last = decrypt_block(last,K1);
+  last = xor_block(last,epprev);
+
+  if(last!=plast) printf("we have problems2\n");
+
 }
