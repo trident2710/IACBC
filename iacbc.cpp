@@ -1,8 +1,6 @@
 #include "libiacbc.h"
 #include "readInput.h"
-#include "string.h"
 #include <iostream>
-#include <bitset>
 
 bool run(iacbc_input_t *params){
   size_t ivsize = BLOCK_SIZE/8;
@@ -15,11 +13,12 @@ bool run(iacbc_input_t *params){
   uint8_t *buf=0;
   size_t len=0;
   read_file(params->input, &buf, &len);
+  int block_bytes,block_count,padded_block_count,enc_blocks_count;
+  block_bytes = BLOCK_SIZE/8;
   if(params->enc){
     printf("%s\n","encryption mode");
-    int block_bytes = BLOCK_SIZE/8;
-    int block_count = len/block_bytes;
-    int padded_block_count = 0;
+
+    block_count = len/block_bytes;
     if(len%block_bytes){
       block_count+=1;
       padded_block_count=2*block_count-1;
@@ -40,33 +39,31 @@ bool run(iacbc_input_t *params){
         if(i%2||data_size!=block_bytes) b = pad(b);
         block_to_char_array(b,pblock);
         memcpy(plain_blocks[i],pblock,block_bytes);
-
     }
-    int enc_blocks_count = padded_block_count+2;
+
+    enc_blocks_count = padded_block_count+2;
+
     unsigned char** encrypted_blocks = (unsigned char**)calloc((enc_blocks_count),sizeof(unsigned char*));
     for(int i = 0; i < enc_blocks_count; i++){
         encrypted_blocks[i] = (unsigned char*)calloc(block_bytes,sizeof(char));
     }
+
     encrypt(params->pwd, strlen(params->pwd), iv, plain_blocks, padded_block_count, encrypted_blocks);
     unsigned char* enc_data = (unsigned char*)calloc(block_bytes*enc_blocks_count,sizeof(char));
     for(int i=0;i<enc_blocks_count;i++){
       memcpy(enc_data+block_bytes*i,encrypted_blocks[i],block_bytes);
     }
+
     write_file(params->out,(uint8_t*)enc_data,enc_blocks_count*block_bytes);
 
-    // printf("len: %d\n",len);
-    // printf("block count: %d\n",block_count);
-    // printf("padded block count: %d\n",padded_block_count);
-    // printf("enc blocks count: %d\n",enc_blocks_count);
-    printf("%s\n","success!");
+    printf("%s\n","finished!");
     return true;
 
   } else{
     printf("%s\n","decryption mode");
-    int block_bytes = BLOCK_SIZE/8;
-    int enc_blocks_count = len/block_bytes;
-    int padded_block_count = enc_blocks_count-2;
-    int block_count;
+
+    enc_blocks_count = len/block_bytes;
+    padded_block_count = enc_blocks_count-2;
     if (padded_block_count %2){
       block_count = (padded_block_count-1)/2+1;
     } else block_count = padded_block_count/2;
@@ -75,7 +72,6 @@ bool run(iacbc_input_t *params){
     for(int i = 0; i < enc_blocks_count; i++){
         encrypted_blocks[i] = (unsigned char*)calloc(block_bytes,sizeof(char));
         memcpy(encrypted_blocks[i],buf+i*block_bytes,block_bytes);
-        //byte_dump(encrypted_blocks[i],16);
     }
 
     unsigned char* plain_text = (unsigned char*)calloc(block_count*block_bytes,sizeof(char));
@@ -105,28 +101,26 @@ bool run(iacbc_input_t *params){
         k++;
       }
     }
+
     write_file(params->out,(uint8_t*)plain_text,block_count*block_bytes);
 
-    // printf("len: %d\n",len);
-    // printf("enc blocks count: %d\n",enc_blocks_count);
-    // printf("padded block count: %d\n",padded_block_count);
-    // printf("block count: %d\n",block_count);
-    printf("%s\n","success!");
+    printf("%s\n","finished!");
     return true;
-
   }
-
 }
 
 int main(int argc, char *const *argv) {
     iacbc_input_t params;
+
     if(!parse_input(argc, argv, &params)){
       printf("Something went wrong while reading input params.\n");
       return 0;
     }
+
     if(!run(&params)){
       printf("Operation did not succeed.\n");
       return 0;
     }
+
     return 1;
 }
